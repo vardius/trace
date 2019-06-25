@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	Lfile      = 1 << iota             // full file name
-	Lline                              // line number
-	Lfunction                          // name of the function
-	LstdFlags  = Llongfile | Lfunction // initial values
+	Lfile      = 1 << iota         // full file name
+	Lline                          // line number
+	Lfunction                      // name of the function
+	LstdFlags  = Lfile | Lfunction // initial values
 )
 
 // Here returns string representation of a reference
