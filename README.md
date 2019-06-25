@@ -36,7 +36,7 @@ import (
 )
 
 func main() {
-    log.Printf("%s\n\t%s", "Hello from:" trace.Here())
+    log.Printf("%s\n\t%s", "Hello from:", trace.Here())
 }
 ```
 

@@ -8,7 +8,7 @@ import (
 
 func Example_here() {
 	c := func() {
-		fmt.Print(trace.Here())
+		fmt.Printf("%s\n%s", "Hello from:", trace.Here())
 	}
 
 	b := func() { c() }
@@ -17,5 +17,6 @@ func Example_here() {
 	a()
 
 	// Output:
-	// /go/src/github.com/vardius/trace/example_test.go:11 github.com/vardius/trace_test.Example_here.func1
+	// Hello from:
+	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:11 github.com/vardius/trace_test.Example_here.func1
 }

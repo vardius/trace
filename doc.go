@@ -10,7 +10,7 @@ Package trace provides helpers to trace the function calls
 	)
 
 	func main() {
-		log.Printf("%s\n\t%s", "Hello from:" trace.Here())
+		log.Printf("%s\n\t%s", "Hello from:", trace.Here())
 	}
 */
 package trace
