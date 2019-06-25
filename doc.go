@@ -1,5 +1,5 @@
 /*
-Package trace provides simple helpers to trace the function calls, errors or logs `File:Line` reference
+Package trace provides simple helpers to trace the function calls, errors or logs reference
 
 	package main
 
@@ -10,7 +10,7 @@ Package trace provides simple helpers to trace the function calls, errors or log
 	)
 
 	func main() {
-		log.Printf("%s\n\t%s", "Hello from:", trace.Here())
+		log.Printf("%s\n\t%s", "Hello from:", trace.Here(Lfile | Lline | Lfunction))
 	}
 */
 package trace
