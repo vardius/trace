@@ -2,42 +2,16 @@ package trace
 
 import (
 	"bytes"
-	"fmt"
-	"runtime"
+	"log"
 )
 
 // Here returns string representation of a reference
-// to a File:Line Function calling this function
+// to a File:Line calling this function
 func Here() string {
 	var buf bytes.Buffer
+	var logger = log.New(&buf, "", log.Llongfile)
 
-	// Ask for up to 3 pcs, including:
-	// - runtime.Callers,
-	// - trace.Here
-	// - pcs for where golog.getPCs was called
-	pc := make([]uintptr, 3)
-	n := runtime.Callers(0, pc)
-
-	if n < 3 {
-		pc = pc[:]
-	}
-
-	// pass only valid pcs to runtime.CallersFrames
-	// exclude irrelevant pcs
-	pc = pc[2:n]
-
-	if len(pc) > 0 {
-		frames := runtime.CallersFrames(pc)
-		// Loop to get frames.
-		// A fixed number of pcs can expand to an indefinite number of Frames.
-		for {
-			frame, more := frames.Next()
-			fmt.Fprintf(&buf, "%s:%d %s", frame.File, frame.Line, frame.Function)
-			if !more {
-				break
-			}
-		}
-	}
+	logger.Output(2, "")
 
 	return buf.String()
 }
