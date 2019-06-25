@@ -2,8 +2,7 @@ package trace
 
 import (
 	"bytes"
-	"fmt"
-	"runtime"
+	"log"
 )
 
 const (
@@ -21,6 +20,7 @@ func Here(flag int) string {
 	}
 
 	var buf bytes.Buffer
+	var logger = log.New(&buf, "", log.Llongfile)
 
 	frame := getFrame(2)
 	if frame != nil {
