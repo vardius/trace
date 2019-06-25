@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	Lfile      = 1 << iota         // full file name
-	Lline                          // line number
-	Lfunction                      // name of the function
-	LstdFlags  = Lfile | Lfunction // initial values
+	Lfile     = 1 << iota         // full file name
+	Lline                         // line number
+	Lfunction                     // name of the function
+	LstdFlags = Lfile | Lfunction // initial values
 )
 
 // Here returns string representation of a reference
@@ -22,7 +22,7 @@ func Here(flag int) string {
 
 	var buf bytes.Buffer
 
-	frame := getFrame(3)
+	frame := getFrame(2)
 	if frame != nil {
 		if flag&Lfile != 0 {
 			fmt.Fprintf(&buf, "%s", frame.File)
