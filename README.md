@@ -6,7 +6,7 @@ Vardius - trace
 [![](https://godoc.org/github.com/vardius/trace?status.svg)](http://godoc.org/github.com/vardius/trace)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/vardius/trace/blob/master/LICENSE.md)
 
-trace - simple helpers to trace the function calls
+trace - simple helper to trace the function calls, errors or logs `File:Line Function` reference
 
 ABOUT
 ==================================================
