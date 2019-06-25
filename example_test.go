@@ -9,7 +9,7 @@ import (
 
 func Example_here() {
 	c := func() {
-		fmt.Printf("%s\n%s", "Hello from:", trace.Here())
+		fmt.Printf("%s\n%s", "Hello from:", trace.Here(Lfile | Lline | Lfunction))
 	}
 
 	b := func() { c() }
@@ -25,7 +25,7 @@ func Example_here() {
 func Example_here_second() {
 	err := errors.New("Internal system error")
 
-	fmt.Printf("%s %s\n%s", "Error:", err, trace.Here())
+	fmt.Printf("%s %s\n%s", "Error:", err, trace.Here(Lfile | Lline | Lfunction))
 
 	// Output:
 	// Error: Internal system error
