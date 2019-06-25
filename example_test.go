@@ -19,7 +19,7 @@ func Example_here() {
 
 	// Output:
 	// Hello from:
-	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:12
+	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:12:
 }
 
 func Example_here_second() {
@@ -29,5 +29,5 @@ func Example_here_second() {
 
 	// Output:
 	// Error: Internal system error
-	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:28
+	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:28:
 }
