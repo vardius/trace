@@ -19,7 +19,7 @@ func Example_here() {
 
 	// Output:
 	// Hello from:
-	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:11 github.com/vardius/trace_test.Example_here.func1
+	// /home/travis/gopath/src/github.com/vardius/trace/example_test.go:12 github.com/vardius/trace_test.Example_here.func1
 }
 
 func Example_here_second() {
