@@ -1,5 +1,5 @@
 /*
-Package trace provides helpers to trace the function calls
+Package trace provides simple helpers to trace the function calls, errors or logs `File:Line Function` reference
 
 	package main
 
