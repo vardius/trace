@@ -5,7 +5,7 @@ import (
 )
 
 func TestTrace(t *testing.T) {
-	ref := Here()
+	ref := Here(Lfile | Lfunction)
 	if ref == "" {
 		t.Fatalf("Did not trace the call (%s)", ref)
 	}
