@@ -3,9 +3,11 @@ package trace
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"runtime"
 )
 
+// Output flags
 const (
 	Lfile     = 1 << iota         // full file name
 	Lline                         // line number
@@ -15,27 +17,37 @@ const (
 
 // Here returns string representation of a reference
 // default flags LstdFlags
-func Here(flag int) string {
-	if flag == 0 {
-		flag = LstdFlags
-	}
+func Here(flags int) string {
+	return FromParent(1, flags)
+}
 
+// FromParent returns string representation of a parent reference
+// default flags LstdFlags
+func FromParent(calldepth int, flags int) string {
 	var buf bytes.Buffer
 
-	frame := getFrame(2)
-	if frame != nil {
-		if flag&Lfile != 0 {
-			fmt.Fprintf(&buf, "%s", frame.File)
-		}
-		if flag&Lline != 0 {
-			fmt.Fprintf(&buf, ":%d", frame.Line)
-		}
-		if flag&Lfunction != 0 {
-			fmt.Fprintf(&buf, " %s", frame.Function)
-		}
-	}
+	frame := getFrame(calldepth + 2)
+	outputFrame(flags, frame, &buf)
 
 	return buf.String()
+}
+
+func outputFrame(flags int, frame *runtime.Frame, w io.Writer) {
+	if flags == 0 {
+		flags = LstdFlags
+	}
+
+	if frame != nil {
+		if flags&Lfile != 0 {
+			fmt.Fprintf(w, "%s", frame.File)
+		}
+		if flags&Lline != 0 {
+			fmt.Fprintf(w, ":%d", frame.Line)
+		}
+		if flags&Lfunction != 0 {
+			fmt.Fprintf(w, " %s", frame.Function)
+		}
+	}
 }
 
 func getFrame(calldepth int) *runtime.Frame {
