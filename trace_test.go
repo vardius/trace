@@ -26,8 +26,8 @@ func TestFromParent(t *testing.T) {
 		args args
 		want string
 	}{
-		{"trace with one flag", args{1, Lline}, ":865"},
-		{"trace with multiple flags", args{1, Lline | Lfunction}, ":865 testing.tRunner"},
+		{"trace with one flag", args{0, Lline}, ":34"},
+		{"trace with multiple flags", args{0, Lline | Lfunction}, ":34 testing.tRunner"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
