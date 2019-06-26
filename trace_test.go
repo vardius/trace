@@ -58,3 +58,10 @@ func TestHere(t *testing.T) {
 		})
 	}
 }
+
+func TestTraceDefaultFlags(t *testing.T) {
+	ref := Here(0)
+	if ref == "" {
+		t.Fatalf("Did not trace the call (%s)", ref)
+	}
+}
