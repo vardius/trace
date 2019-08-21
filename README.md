@@ -1,4 +1,4 @@
-Vardius - trace
+trace
 ================
 [![Build Status](https://travis-ci.org/vardius/trace.svg?branch=master)](https://travis-ci.org/vardius/trace)
 [![Go Report Card](https://goreportcard.com/badge/github.com/vardius/trace)](https://goreportcard.com/report/github.com/vardius/trace)
