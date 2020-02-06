@@ -6,9 +6,11 @@ trace
 [![](https://godoc.org/github.com/vardius/trace?status.svg)](http://godoc.org/github.com/vardius/trace)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/vardius/trace/blob/master/LICENSE.md)
 
+<img align="right" height="180px" src="https://github.com/vardius/gorouter/blob/master/website/src/static/img/logo.png?raw=true" alt="logo" />
+
 trace - simple helper to trace the function calls, errors or logs reference
 
-ABOUT
+📖 ABOUT
 ==================================================
 Contributors:
 
@@ -19,13 +21,16 @@ Want to contribute ? Feel free to send pull requests!
 Have problems, bugs, feature ideas?
 We are using the github [issue tracker](https://github.com/vardius/trace/issues) to manage them.
 
-HOW TO USE
+## 📚 Documentation
+
+For __examples__ **visit [godoc#pkg-examples](http://godoc.org/github.com/vardius/trace#pkg-examples)**
+
+For **GoDoc** reference, **visit [godoc.org](http://godoc.org/github.com/vardius/trace)**
+
+🚏 HOW TO USE
 ==================================================
 
-1. [GoDoc](http://godoc.org/github.com/vardius/trace)
-2. [Examples](http://godoc.org/github.com/vardius/trace#pkg-examples)
-
-Basic example
+## 🏫 Basic example
 ```go
 package main
 
@@ -40,9 +45,7 @@ func main() {
 }
 ```
 
-License
+📜 [License](LICENSE.md)
 -------
 
-This package is released under the MIT license. See the complete license in the package:
-
-[LICENSE](LICENSE.md)
+This package is released under the MIT license. See the complete license in the package
