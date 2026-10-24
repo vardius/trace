@@ -1,0 +1,73 @@
+---
+title: Getting started
+description: Install trace, tag an error with the line it came from, and see what Here and Caller are for.
+---
+
+import { Code, LinkCard, CardGrid, Steps } from '@astrojs/starlight/components';
+import errorsExample from '../../../../examples/errors/main.go?raw';
+
+trace tells you where in your code a call came from: the function, the file and the line. It has two functions
+and one type:
+
+- **Here** returns the frame of the line that calls it.
+- **Caller** returns the frame of a line further up the stack: `Caller(1)` is the line that called your function.
+- A **Frame** is that place. It prints as `service.go:42 users.(*Service).Create`, and has `Function`, `File` and
+  `Line` methods for each part.
+
+## Install
+
+trace needs Go 1.26 or newer.
+
+```sh
+go get github.com/vardius/trace/v2
+```
+
+## Your first tagged error
+
+This program loads a config file. Each time it wraps an error, it puts `trace.Here()` in front, so the message
+says which line every layer of the error came from:
+
+<Code code={errorsExample} lang="go" title="examples/errors/main.go" />
+
+## Run it
+
+<Steps>
+
+1. From a clone of the repository, load a file that doesn't exist:
+
+   ```sh
+   go run ./examples/errors missing.json
+   ```
+
+   ```txt
+   main.go:41 main.main: main.go:23 main.loadConfig: open missing.json: no such file or directory
+   ```
+
+   Read it from the left: `main` wrapped the error on line 41, and `loadConfig` failed to open the file on line 23.
+
+2. Load a file that isn't JSON:
+
+   ```sh
+   go run ./examples/errors go.mod
+   ```
+
+   This time the error comes from line 28, where the file is decoded.
+
+</Steps>
+
+## What just happened
+
+- `trace.Here()` returned a `Frame`: the program counter of the call, which costs nothing to capture.
+- `fmt.Errorf` printed it with `%s`, which calls its `String` method: the file's base name, the line, and the function
+  with its package path cut to the last element.
+- `%w` wrapped the error underneath, so `errors.Is(err, fs.ErrNotExist)` is still true.
+- The first time a frame is printed, trace looks it up and keeps the text, so printing it again allocates nothing.
+
+## Next steps
+
+<CardGrid>
+	<LinkCard title="Frames" href="../frames/" description="Here, Caller, the text form, the zero frame, and frames as map keys." />
+	<LinkCard title="Errors" href="../errors/" description="Tag errors where they are wrapped, and from helpers that wrap them for you." />
+	<LinkCard title="Logging" href="../logging/" description="Frames as slog attributes, and logging helpers that report their caller." />
+	<LinkCard title="Benchmarks" href="../benchmarks/" description="What each call costs, and how v2 compares with v1." />
+</CardGrid>

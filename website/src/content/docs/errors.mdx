@@ -1,0 +1,74 @@
+---
+title: Errors
+description: Tag Go errors with the line they were wrapped on, from your own code or from a helper that wraps them for you.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Put a frame in front of an error as you wrap it, and the message says where every layer came from:
+
+```go
+func (s *Service) Create(ctx context.Context, u User) error {
+	if err := s.repo.Insert(ctx, u); err != nil {
+		return fmt.Errorf("%s: %w", trace.Here(), err)
+	}
+	return nil
+}
+```
+
+```txt
+handler.go:31 api.(*Handler).CreateUser: service.go:42 users.(*Service).Create: duplicate key
+```
+
+`%s` prints the frame with its `String` method, and `%w` wraps the error underneath as usual, so `errors.Is` and
+`errors.As` still find it:
+
+```go
+if errors.Is(err, ErrDuplicateKey) {
+	// the frames in the message don't get in the way
+}
+```
+
+## From a helper
+
+A helper that wraps errors for you should name the line that called it. That line is `Caller(1)`:
+
+```go
+// wrap tags err with the line that called wrap. It returns nil for a nil err.
+func wrap(err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %w", trace.Caller(1), err)
+}
+
+func (s *Service) Create(ctx context.Context, u User) error {
+	return wrap(s.repo.Insert(ctx, u)) // the message names this line
+}
+```
+
+Add one to the number for each helper in between: a helper called by another helper uses `Caller(2)`.
+
+## In an error type
+
+To keep the frame apart from the message, store it in your own error type. A `Frame` is an integer, so it costs
+nothing to keep, and is turned into text only if the error is printed:
+
+```go
+type OpError struct {
+	Op  string
+	At  trace.Frame
+	Err error
+}
+
+func (e *OpError) Error() string { return e.Op + " at " + e.At.String() + ": " + e.Err.Error() }
+func (e *OpError) Unwrap() error { return e.Err }
+```
+
+A `Frame` implements `encoding.TextMarshaler`, so an error type that is sent as JSON carries the frame as text,
+`"service.go:42 users.(*Service).Create"`, not as a number.
+
+<Aside title="Frames are cheap; stacks are not">
+A frame is one line. If you want the whole stack, `runtime/debug.Stack` has it, at a far higher cost.
+Tagging each layer as you wrap it gives most of the same story, line by line, where you chose to tell it.
+</Aside>

@@ -1,0 +1,66 @@
+---
+title: Logging
+description: Log frames as slog attributes, write logging helpers whose records name their caller, and format a record's source.
+---
+
+import { Code } from '@astrojs/starlight/components';
+import slogExample from '../../../../examples/slog/main.go?raw';
+
+`log/slog` can already record where a log call is, with `HandlerOptions.AddSource`. trace covers what that can't:
+a location other than the log call itself, and helpers that log for their caller.
+
+## A frame as an attribute
+
+A `Frame` implements `slog.LogValuer`, so an attribute holding one logs as its text. The handler asks for it only if
+the line is written, and turning it into text allocates nothing.
+
+```go
+logger.Warn("slow query", "at", trace.Caller(1))
+```
+
+```txt
+time=2026-10-24T09:41:07.512+00:00 level=WARN msg="slow query" at="store.go:88 db.(*Store).Users"
+```
+
+With the JSON handler it is a string, `"at":"store.go:88 db.(*Store).Users"`.
+
+## A helper that logs for its caller
+
+A `Frame` and `slog.Record.PC` hold the same kind of program counter. Give a record your caller's frame,
+and `AddSource` reports the caller's line instead of the helper's:
+
+```go
+func audit(ctx context.Context, logger *slog.Logger, msg string, args ...any) {
+	if !logger.Enabled(ctx, slog.LevelInfo) {
+		return
+	}
+	r := slog.NewRecord(time.Now(), slog.LevelInfo, msg, uintptr(trace.Caller(1)))
+	r.Add(args...)
+	_ = logger.Handler().Handle(ctx, r)
+}
+```
+
+The other way round, a handler formats a record's source with `trace.Frame(r.PC)`, as `service.go:42 users.Create`
+rather than the full path `AddSource` writes.
+
+## Example: two helpers
+
+`audit` logs for its caller, and `timed` logs how long its caller took, and where it was, when its function is called:
+
+<Code code={slogExample} lang="go" title="examples/slog/main.go" />
+
+```txt
+time=2026-10-24T09:41:07.512+00:00 level=INFO source=/home/me/trace/examples/slog/main.go:38 msg="user loaded" id=42
+time=2026-10-24T09:41:07.512+00:00 level=INFO source=/home/me/trace/examples/slog/main.go:31 msg="load user" took=21.5µs at="main.go:36 main.loadUser"
+```
+
+The first line's source is `loadUser`'s call to `audit`. The second line is logged inside `timed`, so its source is
+`timed`'s own line, and the `at` attribute says where `loadUser` deferred it.
+
+## Without slog
+
+A frame prints with `%s` anywhere `fmt` does, so the `log` package needs nothing more:
+
+```go
+log.Printf("%s: cache miss for %q", trace.Here(), key)
+```

@@ -1,0 +1,131 @@
+---
+title: Where a Go call came from
+description: Tag Go errors and log lines with the function, file and line they came from. Capturing a frame and formatting it allocate nothing.
+template: splash
+hero:
+  title: Know <span class="accent">where</span> it came from
+  tagline: Tag Go errors and log lines with the function, file and line they came from. A frame is a program counter until it's printed, so capturing and formatting it allocate nothing.
+  actions:
+    - text: Get started
+      link: getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/vardius/trace
+      icon: github
+      variant: minimal
+---
+
+import { CardGrid, Card, LinkButton, LinkCard, Tabs, TabItem } from '@astrojs/starlight/components';
+import BenchmarkChart from '../../components/BenchmarkChart.astro';
+import Stats from '../../components/Stats.astro';
+import { comparison } from '../../data/benchmarks';
+
+<Stats />
+
+<div class="landing-section">
+
+<p class="eyebrow">Features</p>
+
+## What you get
+
+<CardGrid>
+	<Card title="Errors that say where" icon="warning">
+		`fmt.Errorf("%s: %w", trace.Here(), err)` reads `service.go:42 users.(*Service).Create: duplicate key`.
+		`errors.Is` and `errors.As` see through it as before.
+	</Card>
+	<Card title="Helpers that name their caller" icon="right-arrow">
+		`trace.Caller(1)` is the line that called your helper, so wrappers and loggers point at the code that
+		matters, not at themselves.
+	</Card>
+	<Card title="No allocations" icon="rocket">
+		Capturing a frame and formatting it, into a buffer, a string or a `slog` value, allocate nothing once its
+		call site has been used. Tests count every allocation.
+	</Card>
+	<Card title="Made for slog" icon="list-format">
+		A frame logs as text through `slog.LogValuer`, and holds the same program counter as `slog.Record.PC`, so
+		a helper can log with its caller's line as the source.
+	</Card>
+	<Card title="Right with inlining" icon="approve-check">
+		Frames are resolved with `runtime.CallersFrames`, so a function the compiler inlined is still the one named.
+		Tests check it on a helper that really is inlined.
+	</Card>
+	<Card title="Small API" icon="puzzle">
+		Two functions and one type. Nothing to configure and no dependencies beyond the standard library.
+	</Card>
+</CardGrid>
+
+</div>
+
+<div class="landing-section">
+
+<p class="eyebrow">Performance</p>
+
+## Faster than v1, with nothing to allocate
+
+<div class="landing-lead">
+	v2 keeps the program counter and resolves it once per call site, where v1 resolved and formatted it on every call.
+	Getting a frame as a string went from 437 ns and 9 allocations to 72.7 ns and none.
+</div>
+
+<Tabs syncKey="use">
+<TabItem label="Location">
+<BenchmarkChart title="Time to get a location" rows={comparison.location} />
+</TabItem>
+<TabItem label="Errors">
+<BenchmarkChart title="Time to wrap an error with its location" rows={comparison.errors} />
+</TabItem>
+<TabItem label="Logging">
+<BenchmarkChart title="Time to log a line with its location" rows={comparison.logging} />
+</TabItem>
+</Tabs>
+
+With 16 callers at once, the time is wall time per call across all of them, so it measures throughput.
+
+<LinkCard title="How these were measured" href="benchmarks/" description="Methodology, the full v2 suite, and how to run it yourself." />
+
+</div>
+
+<div class="landing-section">
+
+<p class="eyebrow">Upgrading</p>
+
+## Coming from v1
+
+<div class="landing-lead">
+	v1 returned a string built from flags. v2 returns a frame with one text form, and methods for the function,
+	file and line. `FromParent` is now `Caller`.
+</div>
+
+<div class="compare">
+
+```go title="v1"
+err = fmt.Errorf("%s: %w",
+	trace.Here(trace.Lfile|
+		trace.Lline|trace.Lfunction),
+	err)
+
+at := trace.FromParent(1,
+	trace.LstdFlags)
+```
+
+```go title="v2"
+err = fmt.Errorf("%s: %w",
+	trace.Here(), err)
+
+at := trace.Caller(1).String()
+```
+
+</div>
+
+<LinkCard title="Migration guide" href="migrating-from-v1/" description="Every v1 call and its v2 form, and the behaviour changes to know about." />
+
+</div>
+
+<div class="cta not-content">
+	<h2>Tag your first error in a minute</h2>
+	<p>Install the module, put trace.Here() in front of an error, and see where it came from. The guide covers helpers and slog too.</p>
+	<div class="cta-actions">
+		<LinkButton href="getting-started/" icon="right-arrow">Get started</LinkButton>
+		<LinkButton href="frames/" variant="minimal">Read the docs</LinkButton>
+	</div>
+</div>

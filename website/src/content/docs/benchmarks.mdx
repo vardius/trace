@@ -1,0 +1,63 @@
+---
+title: Benchmarks
+description: What each trace call costs, how v2 compares with v1, and how to measure it yourself.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import BenchmarkChart from '../../components/BenchmarkChart.astro';
+import BenchmarkSuite from '../../components/BenchmarkSuite.astro';
+import { comparison, suite } from '../../data/benchmarks';
+
+These numbers measure what trace adds to a call: capturing where it is, and turning that into text.
+Every call site in them has been used before, as it will have been in a running program after its first use.
+
+## v2 against v1
+
+Both versions ran on the same harness, with the same calls. v1 was given all three flags, `Lfile`, `Lline` and
+`Lfunction`, the output closest to v2's `String`.
+
+<Tabs syncKey="use">
+<TabItem label="Location">
+<BenchmarkChart title="Time to get a location" rows={comparison.location} />
+</TabItem>
+<TabItem label="Errors">
+<BenchmarkChart title="Time to wrap an error with its location" rows={comparison.errors} />
+</TabItem>
+<TabItem label="Logging">
+<BenchmarkChart title="Time to log a line with its location" rows={comparison.logging} />
+</TabItem>
+</Tabs>
+
+v1 resolved the program counter and formatted it with `fmt` on every call. v2 keeps the program counter, resolves
+it the first time it is used, and keeps the text, so every later use is a lookup. With 16 callers at once the
+lookups don't contend, which is where the gap is widest. In that row, and in `HereStringParallel` below, the
+time is wall time per call across all callers, so it measures throughput.
+
+## v2's own suite
+
+<BenchmarkSuite rows={suite} />
+
+<Aside title="Where the time and allocations go">
+Capturing a frame is `runtime.Callers` walking up the stack: that is most of the time of `Here`, and it allocates nothing.
+Formatting a frame used before is a lookup in a `sync.Map`. A call site's first use resolves the frame with
+`runtime.CallersFrames` and keeps the result, which allocates a few times, once.
+In the `fmt.Errorf` and `slog` rows, one allocation puts the `Frame` in an `any` argument; the other two
+are `fmt`'s message and error.
+</Aside>
+
+## Run them yourself
+
+From a clone of the repository:
+
+```sh
+go test -run '^$' -bench . -benchmem
+```
+
+To compare two versions, run each a few times and compare with [benchstat](https://pkg.go.dev/golang.org/x/perf/cmd/benchstat):
+
+```sh
+go test -run '^$' -bench . -count 10 > new.txt
+benchstat old.txt new.txt
+```
+
+The allocation counts are also enforced by tests: `TestAllocations` fails if a call allocates more than it should.

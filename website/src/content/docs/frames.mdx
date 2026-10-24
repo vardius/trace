@@ -1,0 +1,100 @@
+---
+title: Frames
+description: Here, Caller and the Frame they return, its text form, the zero frame, frames as map keys, and inlining.
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+import onceExample from '../../../../examples/once/main.go?raw';
+
+```go
+type Frame uintptr
+
+func Here() Frame
+func Caller(skip int) Frame
+```
+
+A `Frame` is a place in your code: the program counter of a call. `Here` and `Caller` capture one,
+and it becomes a function name, a file and a line only when you ask for them.
+
+## Here and Caller
+
+`Here` returns the frame of the line that calls it. `Caller(skip)` walks up the stack: `Caller(0)` is the same as
+`Here`, `Caller(1)` is the line that called the function calling `Caller`, and so on.
+
+```go
+func (s *Service) Create(ctx context.Context, u User) error {
+	here := trace.Here()    // this line, in (*Service).Create
+	from := trace.Caller(1) // the line that called Create
+	// ...
+}
+```
+
+Use `Caller` in helpers, so they name the code that called them rather than themselves.
+A negative `skip` counts as 0.
+
+## The text form
+
+`String` returns `file:line function`, and `%s` and `%v` print a frame with it:
+
+```txt
+service.go:42 users.(*Service).Create
+```
+
+- The file is its base name. The full path depends on the machine that built the program, and is long.
+- The function keeps the last element of its package path: `github.com/acme/users.(*Service).Create` becomes
+  `users.(*Service).Create`. A major version suffix keeps the element before it, so
+  `github.com/vardius/trace/v2.Here` becomes `trace/v2.Here`.
+- A generic function's type arguments read `[...]`, as they do in a stack trace.
+
+For other formats, take the parts on their own:
+
+| Method | Returns |
+| --- | --- |
+| `Function()` | The full name, such as `github.com/acme/users.(*Service).Create` |
+| `File()` | The full path of the file, with forward slashes |
+| `Line()` | The line number |
+| `String()` | `service.go:42 users.(*Service).Create` |
+| `AppendText(b)` | `b` with the `String` text appended, for building a line without allocating |
+
+## The zero frame
+
+When the stack is less deep than you asked, `Caller` returns the zero `Frame`. It prints `???`, and its
+`Function`, `File` and `Line` are empty. Check for it by comparing with zero:
+
+```go
+if f := trace.Caller(n); f == 0 {
+	// the stack has fewer than n calls above this one
+}
+```
+
+## Frames as map keys
+
+A `Frame` is an integer, so frames are comparable and make cheap map keys. Frames captured by the same call
+are equal, so a map keyed by them does something once per call site. This program warns about a deprecated
+function once for every line that calls it:
+
+<Code code={onceExample} lang="go" title="examples/once/main.go" />
+
+<Aside title="Inlined copies">
+When the compiler inlines a function into several callers, each caller gets a copy of its code, and each copy
+has frames of its own. A function inlined in two places is two call sites as far as frames go, though both print the same text.
+The same goes for a generic function: Go compiles it once per shape of its type arguments, so a `Here` in it called
+with an `int` and with a `string` gives two frames.
+</Aside>
+
+## Inlining
+
+The compiler inlines small functions into their callers, so at run time there may be no call at all.
+trace resolves frames with `runtime.CallersFrames`, the runtime's own way of seeing through that: a frame in an
+inlined function names that function and its line, not the one it was inlined into, and `Caller` counts an
+inlined call like any other. The tests check this on a helper the compiler really does inline.
+
+## What it costs
+
+`Here` and `Caller` allocate nothing. What they cost is `runtime.Callers` walking up the stack, a little further for each
+level `Caller` skips.
+
+The first time a frame is used, trace resolves it and keeps the result: a few allocations, once per call site.
+After that, `String`, `AppendText`, `Function`, `File`, `Line` and `LogValue` allocate nothing, and take a few
+nanoseconds. `MarshalText` allocates the slice it returns. The results stay for as long as the program runs,
+one per call site used, so they are bounded by the size of the program.
