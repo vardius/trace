@@ -3,46 +3,63 @@ package trace_test
 import (
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 
-	"github.com/vardius/trace"
+	"github.com/vardius/trace/v2"
 )
 
-func Example_here() {
-	c := func() {
-		fmt.Printf("%s\n%s", "Hello from:", trace.Here(trace.Lline|trace.Lfunction))
-	}
-
-	b := func() { c() }
-	a := func() { b() }
-
-	a()
-
-	// Output:
-	// Hello from:
-	// :12 github.com/vardius/trace_test.Example_here.func1
+func ExampleHere() {
+	fmt.Println(trace.Here())
+	// Output: example_test.go:13 trace/v2_test.ExampleHere
 }
 
-func Example_here_second() {
-	err := errors.New("Internal system error")
+func ExampleHere_error() {
+	errNotFound := errors.New("user not found")
 
-	fmt.Printf("%s %s\n%s", "Error:", err, trace.Here(trace.Lline|trace.Lfunction))
+	err := fmt.Errorf("%s: %w", trace.Here(), errNotFound)
 
+	fmt.Println(err)
+	fmt.Println(errors.Is(err, errNotFound))
 	// Output:
-	// Error: Internal system error
-	// :28 github.com/vardius/trace_test.Example_here_second
+	// example_test.go:20 trace/v2_test.ExampleHere_error: user not found
+	// true
 }
 
-func Example_fromParent() {
-	c := func() {
-		fmt.Printf("%s\n%s", "Hello from:", trace.FromParent(3, trace.Lline|trace.Lfunction))
+func ExampleCaller() {
+	// wrap tags err with the line that called it, not with its own.
+	wrap := func(err error) error {
+		return fmt.Errorf("%s: %w", trace.Caller(1), err)
 	}
 
-	b := func() { c() }
-	a := func() { b() }
+	err := wrap(errors.New("connection refused"))
 
-	a()
+	fmt.Println(err)
+	// Output: example_test.go:35 trace/v2_test.ExampleCaller: connection refused
+}
 
+func ExampleFrame_accessors() {
+	f := trace.Here()
+
+	fmt.Println(f.Function())
+	fmt.Println(f.Line())
 	// Output:
-	// Hello from:
-	// :43 github.com/vardius/trace_test.Example_fromParent
+	// github.com/vardius/trace/v2_test.ExampleFrame_accessors
+	// 42
+}
+
+func ExampleFrame_AppendText() {
+	buf := make([]byte, 0, 128)
+
+	buf, _ = trace.Here().AppendText(buf)
+
+	fmt.Println(string(buf))
+	// Output: example_test.go:54 trace/v2_test.ExampleFrame_AppendText
+}
+
+func ExampleFrame_LogValue() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{ReplaceAttr: withoutTime}))
+
+	logger.Info("cache miss", "at", trace.Here())
+	// Output: level=INFO msg="cache miss" at="example_test.go:63 trace/v2_test.ExampleFrame_LogValue"
 }
